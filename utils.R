@@ -67,6 +67,36 @@ get_sites_controls_from_db <- function(sampleName_GTSP, referenceGenome, connect
     get_integration_sites_with_mrcs(sampleName_GTSP, reference_genome_sequence, connection)
 }
 
+get_sites_controls_from_file <- function(sampleName_GTSP, referenceGenome, sites){
+    if ( ! "label" %in% colnames(sampleName_GTSP)) {
+        sampleName_GTSP$label <- sampleName_GTSP$GTSP
+    }
+    sampleName_GTSP <- select(sampleName_GTSP, sampleName, GTSP, label)
+
+    # should have at least two samples
+    stopifnot(length(unique(sampleName_GTSP$GTSP)) != 1)
+
+    sampleName_GTSP$refGenome <- rep(referenceGenome, nrow(sampleName_GTSP))
+
+    # samples should have sites
+    stopifnot(all(sapply(split(sites, sites$sampleName), nrow) > 1)
+    # also we need at least several sites per sample/replicate
+    sites_table <- mutate(sites, pos = ifelse(strand == "+", start, end)) %>%
+      distinct(seqnames, pos, strand, sampleName) %>%
+      group_by(sampleName) %>%
+      summarise(uniq_sites = n()) %>%
+      ungroup() %>% as.data.frame()
+    
+    if(any(sites_table$uniq_sites < 3) | any(!sampleName_GTSP$label %in% sites_table$sampleName)){
+      print("Not enough sites (minimum 3) where found for each sample.")
+      print(sites_table)
+      stop()
+    }
+
+    reference_genome_sequence <- get_reference_genome(referenceGenome)
+    get_integration_sites_with_mrcs(sampleName_GTSP, reference_genome_sequence, sites)    
+}
+
 add_label <- function(sites, sampleName_GTSP) {
     sites_GTSP <- merge(sites, sampleName_GTSP)
     sites_GTSP$sampleName <- sites_GTSP$label
@@ -79,11 +109,22 @@ add_label <- function(sites, sampleName_GTSP) {
 get_integration_sites_with_mrcs <- function(
     sampleName_GTSP, refGenomeSeq, connection
 ) {
-    sites <- getUniqueSites(sampleName_GTSP, connection)
+    if(class(connection) == "character"){
+      sites <- getUniqueSites(sampleName_GTSP, connection)
+    }else{
+      sites <- connection
+    }
     sites$type <- "insertion"
-    sites <- add_label(sites, sampleName_GTSP)
     
-    mrcs <- getMRCs(sampleName_GTSP, connection)
+    if(class(connection) == "character"){
+      sites <- add_label(sites, sampleName_GTSP)
+      mrcs <- getMRCs(sampleName_GTSP, connection)
+    }else{
+      sites.metadata <- select(sites, siteID, gender, sampleName, refGenome)
+      mrcs <- get_N_MRCs(sites.metadata, reference_genome)
+      mrcs <- merge(mrcs, sites.metadata[,c("siteID", "sampleName", "refGenome")])
+    }
+
     mrcs$type <- "match"
     mrcs <- add_label(mrcs, sampleName_GTSP)
 
