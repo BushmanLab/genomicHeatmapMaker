@@ -15,11 +15,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-library(colorspace)
-library(hiAnnotator)
-library(intSiteRetriever)
-library(GCcontent)
-library(BSgenome)
+packs <- c("colorspace", "hiAnnotator", "intSiteRetriever", "GCcontent", "BSgenome")
+null <- suppressMessages(sapply(packs, require, character.only = TRUE)) 
 #library(pipeUtils)
 
 codeDir <- dirname(sub("--file=", "", grep("--file=", commandArgs(trailingOnly=FALSE), value=T)))
@@ -28,7 +25,7 @@ make_heatmap <- function(sampleName_GTSP, referenceGenome, output_dir, connectio
     if(class(connection) == "character"){
       sites_mrcs <- get_sites_controls_from_db(
           sampleName_GTSP, referenceGenome, connection)
-    }else{      
+    }else{
       sites_mrcs <- get_sites_controls_from_file(
           sampleName_GTSP, referenceGenome, connection)
     }

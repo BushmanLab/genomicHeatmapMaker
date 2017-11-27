@@ -17,12 +17,7 @@
 
 codeDir <- dirname(sub("--file=", "", grep("--file=", commandArgs(trailingOnly=FALSE), value=T)))
 
-source(file.path(codeDir, "genomicHeatmapMaker.R"))
-source(file.path(codeDir, "utils.R"))
-
-libs <- c("argparse", "DBI", "RMySQL", "dplyr", 'yaml', 'RSQLite')
-invisible(sapply(libs, library, character.only=TRUE))
-
+suppressPackageStartupMessages(library("argparse"))
 parser <- ArgumentParser(description="Make genomic heatmap for sites from database")
 parser$add_argument("sample_gtsp", nargs='?', default='sampleName_GTSP.csv')
 parser$add_argument("-c", default="./INSPIIRED.yml", help="path to INSPIIRED configuration file.")
@@ -32,11 +27,17 @@ parser$add_argument("-r", "--ref_genome", type="character", default="hg18",
     help="reference genome used for all samples")
 parser$add_argument("-s", "--sites_group", type="character", default="intsites_miseq.read", 
     help="which group to use for connection")
-parser$add_argument("-f", "--file", type="character", defaults=NULL,
+parser$add_argument("-f", "--file", type="character", default=NULL,
     help="File with sites. CSV format. Included columns: seqnames, start, end, strand, sampleName, refGenome.")
 
 args <- parser$parse_args()
 args
+
+suppressMessages(source(file.path(codeDir, "genomicHeatmapMaker.R")))
+suppressMessages(source(file.path(codeDir, "utils.R")))
+
+libs <- c("DBI", "RMySQL", "dplyr", 'yaml', 'RSQLite')
+null <- suppressMessages(sapply(libs, library, character.only=TRUE))
 
 # Load configuration file
 if (!file.exists(args$c)) stop("the configuration file can not be found.")
@@ -68,7 +69,7 @@ print(sampleName_GTSP)
 stopifnot(file.exists(args$file))
 sites <- read.csv(args$file)
 # Check for required columns
-if(!all(c("seqnames", "start", "end", "strand", "sampleName", "refGenome") %in% names(sites)){
+if(!all(c("seqnames", "start", "end", "strand", "sampleName", "refGenome") %in% names(sites))){
   stop("Lacking required columns in input file. See help.")
 }
 sites <- select(sites, seqnames, start, end, strand, sampleName, refGenome) %>%

@@ -18,8 +18,20 @@
 library(hotROCs)
 
 getRefSeq_genes <- function(reference_genome) {
+  # Identify table and track names
+  bsession <- makeUCSCsession(reference_genome)
+  trk_names <- names(trackNames(ucscTableQuery(bsession)))
+  tbl_names <- tableNames(ucscTableQuery(bsession))
+
+  trk <- grep("RefSeq", trk_names, value = TRUE)
+  trk <- trk[trk %in% c("NCBI RefSeq", "RefSeq Genes")]
+  stopifnot(length(trk) == 1)
+
+  tbl <- grep("refGene", tbl_names, value = TRUE)
+  stopifnot(length(tbl) == 1)
+
   refSeq <- makeGRanges(
-    getUCSCtable("refGene", "RefSeq Genes", freeze=reference_genome),
+    getUCSCtable(tbl, trk, freeze=reference_genome),
     freeze=reference_genome
   )
 }
@@ -79,20 +91,17 @@ get_sites_controls_from_file <- function(sampleName_GTSP, referenceGenome, sites
     sampleName_GTSP$refGenome <- rep(referenceGenome, nrow(sampleName_GTSP))
 
     # samples should have sites
-    stopifnot(all(sapply(split(sites, sites$sampleName), nrow) > 1)
+    stopifnot(all(sapply(split(sites, sites$sampleName), nrow) > 1))
     # also we need at least several sites per sample/replicate
-    sites_table <- mutate(sites, pos = ifelse(strand == "+", start, end)) %>%
-      distinct(seqnames, pos, strand, sampleName) %>%
-      group_by(sampleName) %>%
-      summarise(uniq_sites = n()) %>%
-      ungroup() %>% as.data.frame()
-    
-    if(any(sites_table$uniq_sites < 3) | any(!sampleName_GTSP$label %in% sites_table$sampleName)){
+
+    sample_table <- table(as.character(sites$sampleName))
+    message("\nSites observed per sample:")
+    print(sample_table)
+   
+    if(any(sample_table < 3) | any(!sampleName_GTSP$label %in% names(sample_table))){
       print("Not enough sites (minimum 3) where found for each sample.")
-      print(sites_table)
       stop()
     }
-
     reference_genome_sequence <- get_reference_genome(referenceGenome)
     get_integration_sites_with_mrcs(sampleName_GTSP, reference_genome_sequence, sites)    
 }
@@ -121,13 +130,13 @@ get_integration_sites_with_mrcs <- function(
       mrcs <- getMRCs(sampleName_GTSP, connection)
     }else{
       sites.metadata <- select(sites, siteID, gender, sampleName, refGenome)
-      mrcs <- get_N_MRCs(sites.metadata, reference_genome)
+      mrcs <- get_N_MRCs(sites.metadata[,c("siteID", "gender")], refGenomeSeq)
       mrcs <- merge(mrcs, sites.metadata[,c("siteID", "sampleName", "refGenome")])
     }
 
     mrcs$type <- "match"
     mrcs <- add_label(mrcs, sampleName_GTSP)
-
+    sites <- select(sites, sampleName, siteID, chr, strand, position, type)
     sites_mrcs <- rbind(sites, mrcs)
 
     sites_mrcs <- makeGRanges(sites_mrcs, soloStart=TRUE,
