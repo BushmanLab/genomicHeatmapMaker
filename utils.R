@@ -91,7 +91,7 @@ get_sites_controls_from_file <- function(sampleName_GTSP, referenceGenome, sites
     sampleName_GTSP$refGenome <- rep(referenceGenome, nrow(sampleName_GTSP))
 
     # samples should have sites
-    stopifnot(all(sapply(split(sites, sites$sampleName), nrow) > 1))
+    stopifnot(all(sapply(split(sites, sites$sampleName), nrow) > 0))
     # also we need at least several sites per sample/replicate
 
     sample_table <- table(as.character(sites$sampleName))
