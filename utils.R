@@ -15,7 +15,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-library(hotROCs)
+##library(hotROCs)
+
+codeDir <- dirname(sub("--file=", "", grep("--file=", commandArgs(trailingOnly=FALSE), value=T)))
+source(file.path(codeDir,'supp.R'))
+
 
 getRefSeq_genes <- function(reference_genome) {
   refSeq <- makeGRanges(

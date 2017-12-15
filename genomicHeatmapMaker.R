@@ -15,17 +15,16 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-library(colorspace)
-library(hiAnnotator)
-library(intSiteRetriever)
-library(GCcontent)
+##library(hiAnnotator)
 library(BSgenome)
 library(BSgenome.Hsapiens.UCSC.hg18)
 library(BSgenome.Mmusculus.UCSC.mm9)
 
+codeDir <- dirname(sub("--file=", "", grep("--file=", commandArgs(trailingOnly=FALSE), value=T)))
+source(file.path(codeDir,'supp.R'))
+
 #library(pipeUtils)
 
-codeDir <- dirname(sub("--file=", "", grep("--file=", commandArgs(trailingOnly=FALSE), value=T)))
 
 make_heatmap <- function(sampleName_GTSP, referenceGenome, output_dir, connection) {
     sites_mrcs <- get_sites_controls_from_db(

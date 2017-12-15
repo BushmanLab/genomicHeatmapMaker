@@ -19,6 +19,8 @@ codeDir <- dirname(sub("--file=", "", grep("--file=", commandArgs(trailingOnly=F
 
 source(file.path(codeDir, "genomicHeatmapMaker.R"))
 source(file.path(codeDir, "utils.R"))
+source(file.path(codeDir, 'supp.R'))
+
 
 libs <- c("argparse", "DBI", "RMySQL", "dplyr", 'yaml', 'RSQLite')
 invisible(sapply(libs, library, character.only=TRUE))
