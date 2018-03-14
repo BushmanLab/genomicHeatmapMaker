@@ -17,9 +17,6 @@
 
 packs <- c("colorspace", "hiAnnotator", "intSiteRetriever", "GCcontent", "BSgenome")
 null <- suppressMessages(sapply(packs, require, character.only = TRUE)) 
-#library(pipeUtils)
-
-codeDir <- dirname(sub("--file=", "", grep("--file=", commandArgs(trailingOnly=FALSE), value=T)))
 
 make_heatmap <- function(sampleName_GTSP, referenceGenome, output_dir, connection) {
     if(class(connection) == "character"){
@@ -29,7 +26,7 @@ make_heatmap <- function(sampleName_GTSP, referenceGenome, output_dir, connectio
       sites_mrcs <- get_sites_controls_from_file(
           sampleName_GTSP, referenceGenome, connection)
     }
-    sites_to_heatmap(sites_mrcs, referenceGenome, output_dir)
+    sites_to_heatmap(sites_mrcs, referenceGenome, sampleName_GTSP, output_dir)
 }
 
 #' generate heatmap
@@ -37,8 +34,10 @@ make_heatmap <- function(sampleName_GTSP, referenceGenome, output_dir, connectio
 #' @param sites_mrcs real sites and mrcs GRanges object with metacolumns: 
 #'      sitID, type, label
 #' @param referenceGenome reference genome name, e.g. "hg18"
+#' @param sampleName_GTSP input sample table, preserves order.
 #' @param output_dir name of the directory
-sites_to_heatmap <- function(sites_mrcs, referenceGenome, output_dir) {
+sites_to_heatmap <- function(sites_mrcs, referenceGenome, 
+                             sampleName_GTSP, output_dir) {
     reference_genome_sequence <- get_reference_genome(referenceGenome)
     # TODO: populate from local database, at present pulled from UCSC web-site
     refSeq_genes <- getRefSeq_genes(referenceGenome)
@@ -116,9 +115,9 @@ sites_to_heatmap <- function(sites_mrcs, referenceGenome, output_dir) {
     
     if (config$rocControls == 'unmatched')
     {
-       sites_to_ROC_ordinary(sites_mrcs, output_dir)
+       sites_to_ROC_ordinary(sites_mrcs, sampleName_GTSP, output_dir)
     } else if (config$rocControls == 'matched') {
-       sites_to_ROC_matched(sites_mrcs, output_dir)
+       sites_to_ROC_matched(sites_mrcs, sampleName_GTSP, output_dir)
     } else {
        stop('Error, rocControls is not properly defined in the configuration file.') 
     }

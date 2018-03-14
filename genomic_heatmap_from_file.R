@@ -34,7 +34,7 @@ args
 suppressMessages(source(file.path(codeDir, "genomicHeatmapMaker.R")))
 suppressMessages(source(file.path(codeDir, "utils.R")))
 
-libs <- c("DBI", "RMySQL", "dplyr", 'yaml', 'RSQLite')
+libs <- c("DBI", "RMySQL", "dplyr", 'yaml', 'RSQLite', 'hotROCs')
 null <- suppressMessages(sapply(libs, library, character.only=TRUE))
 
 # Load configuration file
@@ -67,8 +67,10 @@ print(sampleName_GTSP)
 stopifnot(file.exists(args$file))
 sites <- read.csv(args$file)
 # Check for required columns
-if(!all(c("seqnames", "strand", "position", "sampleName", "refGenome") %in% names(sites))){
-  stop("Lacking required columns in input file. See help.")
+if(!all(
+  c("seqnames", "strand", "position", "sampleName", "refGenome") %in% 
+  names(sites))){
+    stop("Lacking required columns in input file. See help.")
 }
 sites <- distinct(sites, seqnames,strand, position, sampleName, refGenome) %>%
   mutate(
