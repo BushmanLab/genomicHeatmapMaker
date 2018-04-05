@@ -57,9 +57,23 @@ sites_to_heatmap <- function(sites_mrcs, referenceGenome,
         as.character(onco$V1)
     }
     oncogenes <- get_oncogene_from_file(oncogene_file)
-    # END annotation loading
-
-
+    
+    if(referenceGenome == "hg38"){
+      stability_regions <- readRDS(
+        file.path(codeDir, "fragileRegions.hg38.rds"))
+      fragile_regions <- stability_regions[
+        stability_regions$regionType == "aCFR"]
+      non_fragile_regions <- stability_regions[
+        stability_regions$regionType == "NFR"]
+      
+      window_size_fragReg <- c("100k"=1e5)
+      
+      sites_mrcs <- getFeatureCounts(
+        sites_mrcs, non_fragile_regions, "NFR", width = window_size_fragReg)
+      sites_mrcs <- getFeatureCounts(
+        sites_mrcs, fragile_regions, "aCFR", width = window_size_fragReg)
+    }
+    
     # is there oncogene closer than 50k
     refSeq_gene_symbols <- refSeq_genes$name2
     #' check if gene is onco gene list(curated by Bushman's lab)
