@@ -66,7 +66,7 @@ sites_to_heatmap <- function(sites_mrcs, referenceGenome,
       non_fragile_regions <- stability_regions[
         stability_regions$regionType == "NFR"]
       
-      window_size_fragReg <- c("100k"=1e5)
+      window_size_fragReg <- c("1M"=1e6)
       
       sites_mrcs <- getFeatureCounts(
         sites_mrcs, non_fragile_regions, "NFR", width = window_size_fragReg)
